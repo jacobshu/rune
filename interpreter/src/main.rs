@@ -4,14 +4,18 @@ use std::io::{self, BufRead};
 use std::path::Path;
 use std::process::exit;
 
+mod error;
+
 struct Rune {
   had_error: bool,
+  errors: Vec<error::Error>,
 }
 
 impl Rune {
   fn new() -> Self {
     Rune {
       had_error: false,
+      errors: vec![],
     }
   }
 
@@ -24,11 +28,8 @@ impl Rune {
   fn run_prompt(&mut self) {
     println!("\n‹◊◊ Rune ◊◊›\nMythic power at your fingertips\n");
     loop {
-      // let mut buffer = String::new();
       let stdin = io::stdin();
       for line in stdin.lock().lines() {
-        // println!("{}", line.unwrap());
-
         match line.unwrap().as_str() {
           "exit" => {
             println!("\n");
@@ -48,7 +49,7 @@ impl Rune {
   fn run(&mut self, source: String) {
 
     if self.had_error {
-      println!("Errors!")
+      println!("Errors: {}", self.errors.len())
     }
 
     println!("source: {}", source);
