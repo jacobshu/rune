@@ -58,11 +58,11 @@ pub enum Literal {
 
 #[derive(Clone)]
 pub struct Token {
-  r#type: TokenType,
-  lexeme: String,
-  literal: Option<Literal>
-  line: usize,
-  col: u64,
+  pub r#type: TokenType,
+  pub lexeme: String,
+  pub literal: Option<Literal>
+  pub line: usize,
+  pub col: u64,
 }
 
 impl fmt::Debug for Token {
