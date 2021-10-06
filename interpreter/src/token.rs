@@ -140,5 +140,10 @@ fn build_token() {
     .col(column)
     .build();
   
+  assert_eq!(token.r#type, TokenType::String);
+  assert_eq!(token.lexeme, raw_string);
   assert_eq!(token.line.unwrap(), row);
+  assert_eq!(token.col.unwrap(), column);
+  // TODO: figure out where to parse literal values: either at token creation, or when inserting tokens on scanning
+  // assert_eq!(token.literal, raw_string) 
 }
