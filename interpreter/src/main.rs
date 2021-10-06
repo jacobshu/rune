@@ -1,10 +1,13 @@
+#![allow(dead_code)]
 use std::fs::read_to_string;
 use std::io::prelude::*;
 use std::io::{self, BufRead};
 use std::path::Path;
 use std::process::exit;
 
+
 mod error;
+mod token;
 
 struct Rune {
   had_error: bool,
