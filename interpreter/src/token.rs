@@ -1,4 +1,7 @@
-pub enum TokenTypes {
+use std::fmt;
+
+#[derive(Debug, Clone)]
+pub enum TokenType {
   // One character
   LeftParen,
   RightParen,
@@ -45,8 +48,7 @@ pub enum TokenTypes {
   Var,
   While,
 
-  EOF
-
+  EOF,
 }
 
 #[derive(Debug, Clone)]
@@ -60,19 +62,83 @@ pub enum Literal {
 pub struct Token {
   pub r#type: TokenType,
   pub lexeme: String,
-  pub literal: Option<Literal>
-  pub line: usize,
-  pub col: u64,
+  pub literal: Option<Literal>,
+  pub line: Option<usize>,
+  pub col: Option<u64>,
 }
 
 impl fmt::Debug for Token {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    write!(f, "Token: { type: {:?}, lexeme: \"{}\", literal: {:?}, line: {:?}, col: {:?}}",
-        self.r#type,
-        String::from_utf8(self.lexeme.clone()).unwrap(),
-        self.literal,
-        self.line,
-        self.col
+    write!(
+      f,
+      "Token: {{ type: {:?}, lexeme: \"{}\", literal: {:?}, line: {:?}, col: {:?}}}",
+      self.r#type, self.lexeme, self.literal, self.line, self.col
     )
   }
+}
+
+impl Token {
+  pub fn new(token_type: TokenType, lexeme: &String) -> Self {
+    Token {
+      r#type: token_type,
+      lexeme: lexeme.to_string(),
+      literal: None,
+      line: None,
+      col: None,
+    }
+  }
+
+  pub fn literal(self, literal: Literal) -> Self {
+    Self {
+      r#type: self.r#type,
+      lexeme: self.lexeme,
+      literal: Some(literal),
+      line: None,
+      col: None,
+    }
+  }
+
+  pub fn line(self, line: usize) -> Self {
+    Self {
+      r#type: self.r#type,
+      lexeme: self.lexeme,
+      literal: self.literal,
+      line: Some(line),
+      col: None,
+    }
+  }
+
+  pub fn col(self, col: u64) -> Self {
+    Self {
+      r#type: self.r#type,
+      lexeme: self.lexeme,
+      literal: self.literal,
+      line: self.line,
+      col: Some(col),
+    }
+  }
+
+  pub fn build(self) -> Token {
+    Token {
+      r#type: self.r#type,
+      lexeme: self.lexeme,
+      literal: self.literal,
+      line: self.line,
+      col: self.col,
+    }
+  }
+}
+
+#[test]
+fn build_token() {
+  let raw_string = String::from("54");
+  let row = 3;
+  let column = 5;
+  let token = Token::new(TokenType::String, &raw_string)
+    .literal(Literal::Str(raw_string))
+    .line(row)
+    .col(column)
+    .build();
+  
+  assert_eq!(token.line.unwrap(), row);
 }
