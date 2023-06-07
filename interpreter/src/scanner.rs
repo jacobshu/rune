@@ -1,8 +1,10 @@
-mod Token;
-mod error;
+use crate::error::{ErrorType, RuneError};
+use crate::token::{Token, TokenType};
+use std::iter::Peekable;
+use std::str::CharIndices;
 
 pub struct Scanner {
-    source: Iterator,
+    source: Peekable<CharIndices<'b>>,
     tokens: Vec<Token>,
     start: usize,
     current: usize,
@@ -10,7 +12,7 @@ pub struct Scanner {
 }
 
 impl Scanner {
-    pub fn new(input: String) -> Self {
+    pub fn new(input: &str) -> Self {
         Self {
             source: input.char_indices().peekable(),
             tokens: Vec::new(),
@@ -20,91 +22,83 @@ impl Scanner {
         }
     }
 
-    fn is_at_end(&mut self) {
-        self.current >= source.len()
+    fn is_at_end(&mut self) -> bool {
+        self.current >= self.source.len()
     }
 
-    fn scan_tokens(&mut self) {
-        while (!self.is_at_end()) {
+    pub fn scan_tokens(&mut self) -> Vec<Token> {
+        while !self.is_at_end() {
             self.start = self.current;
             self.scan_token()
         }
+        self.tokens
     }
 
     fn scan_token(&mut self) {
         while let Some((index, char)) = self.source.next() {
-        let token = match char {
-            '(' => Token::new(TokenType::LeftParen), 
-            ')' => Token::new(TokenType::RightParen),
-            '{' => Token::new(TokenType::LeftBrace),
-            '}' => Token::new(TokenType::RightBrace),
-            ',' => Token::new(TokenType::Comma),
-            '.' => Token::new(TokenType::Dot),
-            '+' => Token::new(TokenType::Plus),
-            '-' => Token::new(TokenType::Minus),
-            ';' => Token::new(TokenType::Semicolon),
+            let token = match char {
+                '(' => Token::new(TokenType::LeftParen, &char.to_string()),
+                ')' => Token::new(TokenType::RightParen, &char.to_string()),
+                '{' => Token::new(TokenType::LeftBrace, &char.to_string()),
+                '}' => Token::new(TokenType::RightBrace, &char.to_string()),
+                ',' => Token::new(TokenType::Comma, &char.to_string()),
+                '.' => Token::new(TokenType::Dot, &char.to_string()),
+                '+' => Token::new(TokenType::Plus, &char.to_string()),
+                '-' => Token::new(TokenType::Minus, &char.to_string()),
+                ';' => Token::new(TokenType::Semicolon, &char.to_string()),
 
-        // // One to two characters
-        '=' => {
-            match self.source.next_if_eq(&(index + 1, '=')) {
-            	Some(_equals) => Token::new(TokenType::EqualEqual),
-            	None => Token::new(TokenType::Equal),
-            }
-        },
-        '!' => {
-            match self.source.next_if_eq(&(index + 1, '=')) {
-            	Some(_equals) => Token::new(TokenType::BangEqual),
-            	None => Token::new(TokenType::Bang)
-            }
-        },
-        '>' => {
-            match self.source.next_if_eq(&(index + 1, '=')) {
-                Some(_equals) => Token::new(TokenType::GreaterEqual),
-                None => Token::new(TokenType::Greater)
-            }
-        },
-        '<' => {
-            match self.source.next_if_eq(&(index + 1, '=')) {
-                Some(_equals) => Token::new(TokenType::LessEqual),
-                None => Token::new(TokenType::Less)
-            }
-        },
-        '*' => {
-            match self.source.next_if_eq(&(index + 1, '*')) {
-                Some(_equals) => Token::new(TokenType::StarStar),
-                None => Token::new(TokenType::Star)
-            }
-        },
-                
-        // Slash,
+                // // One to two characters
+                '=' => match self.source.next_if_eq(&(index + 1, '=')) {
+                    Some(_equals) => Token::new(TokenType::EqualEqual, &"==".to_string()),
+                    None => Token::new(TokenType::Equal, &char.to_string()),
+                },
+                '!' => match self.source.next_if_eq(&(index + 1, '=')) {
+                    Some(_equals) => Token::new(TokenType::BangEqual, &"!=".to_string()),
+                    None => Token::new(TokenType::Bang, &char.to_string()),
+                },
+                '>' => match self.source.next_if_eq(&(index + 1, '=')) {
+                    Some(_equals) => Token::new(TokenType::GreaterEqual, &">=".to_string()),
+                    None => Token::new(TokenType::Greater, &char.to_string()),
+                },
+                '<' => match self.source.next_if_eq(&(index + 1, '=')) {
+                    Some(_equals) => Token::new(TokenType::LessEqual, &"<=".to_string()),
+                    None => Token::new(TokenType::Less, &char.to_string()),
+                },
+                '*' => match self.source.next_if_eq(&(index + 1, '*')) {
+                    Some(_equals) => Token::new(TokenType::StarStar, &"**".to_string()),
+                    None => Token::new(TokenType::Star, &char.to_string()),
+                },
 
-        // // Literals
-        // Identifier,
-        // String,
-        // Number,
+                // Slash,
 
-        // // Keywords
-        // And,
-        // Class,
-        // Else,
-        // False,
-        // Fun,
-        // For,
-        // If,
-        // Nil,
-        // Or,
-        // Print,
-        // Return,
-        // Super,
-        // This,
-        // True,
-        // Var,
-        // While,
+                // // Literals
+                // Identifier,
+                // String,
+                // Number,
 
-        // EOF,
-        _ => Token::Invalid(format!("{}", ch)),
-        };
-        tokens.push(token);
+                // // Keywords
+                // And,
+                // Class,
+                // Else,
+                // False,
+                // Fun,
+                // For,
+                // If,
+                // Nil,
+                // Or,
+                // Print,
+                // Return,
+                // Super,
+                // This,
+                // True,
+                // Var,
+                // While,
+
+                // EOF,
+                _ => RuneError::new(ErrorType::Scanner, self.line, 5, "Invalid token"),
+            };
+            self.tokens.push(token);
+        }
     }
 }
 
@@ -114,7 +108,7 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let test_input = String::new("abcdefg=hi+jk");
+        let test_input = "abcdefg=hi+jk";
         let scanner = Scanner::new(test_input);
         scanner.scan();
         assert_eq!(4, 2 * 2);
