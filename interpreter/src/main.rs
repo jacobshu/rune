@@ -51,7 +51,8 @@ impl Rune {
         if self.had_error {
             println!("Errors: {}", self.errors.len())
         }
-        let scanner = scanner::Scanner::new(source);
+        let source_string = source.to_string();
+        let mut scanner = scanner::Scanner::new(&source_string);
         let tokens: Vec<token::Token> = scanner.scan_tokens();
 
         for token in tokens.iter() {

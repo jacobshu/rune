@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
     // One character
     LeftParen,
@@ -50,6 +50,7 @@ pub enum TokenType {
     While,
 
     EOF,
+    Invalid,
 }
 
 #[derive(Debug, Clone)]
@@ -110,11 +111,11 @@ fn build_token() {
     let raw_string = String::from("54");
     let row = 3;
     let column = 5;
-    let token = Token::new(TokenType::String, &raw_string)
-        .literal(Literal::Str(raw_string))
+    let mut binding = Token::new(TokenType::String, &raw_string);
+    let token = binding
+        .literal(Literal::Str(raw_string.clone()))
         .line(row)
-        .col(column)
-        .build();
+        .col(column);
 
     assert_eq!(token.r#type, TokenType::String);
     assert_eq!(token.lexeme, raw_string);

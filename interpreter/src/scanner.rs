@@ -3,16 +3,16 @@ use crate::token::{Token, TokenType};
 use std::iter::Peekable;
 use std::str::CharIndices;
 
-pub struct Scanner {
-    source: Peekable<CharIndices<'b>>,
+pub struct Scanner<'a> {
+    source: Peekable<CharIndices<'a>>,
     tokens: Vec<Token>,
     start: usize,
     current: usize,
     line: usize,
 }
 
-impl Scanner {
-    pub fn new(input: &str) -> Self {
+impl<'a> Scanner<'a> {
+    pub fn new(input: &'a String) -> Self {
         Self {
             source: input.char_indices().peekable(),
             tokens: Vec::new(),
@@ -23,7 +23,7 @@ impl Scanner {
     }
 
     fn is_at_end(&mut self) -> bool {
-        self.current >= self.source.len()
+        self.source.peek() == None
     }
 
     pub fn scan_tokens(&mut self) -> Vec<Token> {
@@ -31,7 +31,7 @@ impl Scanner {
             self.start = self.current;
             self.scan_token()
         }
-        self.tokens
+        self.tokens.clone()
     }
 
     fn scan_token(&mut self) {
@@ -95,7 +95,10 @@ impl Scanner {
                 // While,
 
                 // EOF,
-                _ => RuneError::new(ErrorType::Scanner, self.line, 5, "Invalid token"),
+                unknown => {
+                    RuneError::new(ErrorType::Scanner, self.line, 5, "Invalid token");
+                    Token::new(TokenType::Invalid, &unknown.to_string())
+                }
             };
             self.tokens.push(token);
         }
@@ -108,9 +111,9 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let test_input = "abcdefg=hi+jk";
-        let scanner = Scanner::new(test_input);
-        scanner.scan();
+        let test_input = "abcdefg=hi+jk".to_string();
+        let mut scanner = Scanner::new(&test_input);
+        scanner.scan_tokens();
         assert_eq!(4, 2 * 2);
     }
 }
