@@ -70,13 +70,25 @@ impl<'a> Scanner<'a> {
                 },
 
                 // Slash,
+                '/' => match self.source.next_if_eq(&(index + 1, '/')) {
+                    Some(_equals) => {
+                        let comment = self
+                            .source
+                            .by_ref()
+                            .take_while(|(_pos, c)| *c != '\n')
+                            .map(|(_pos, c)| c)
+                            .collect();
+                        Token::new(TokenType::Comment, &comment)
+                    }
+                    None => Token::new(TokenType::Slash, &char.to_string()),
+                },
 
-                // // Literals
+                // Literals
                 // Identifier,
                 // String,
                 // Number,
 
-                // // Keywords
+                // Keywords
                 // And,
                 // Class,
                 // Else,
@@ -95,11 +107,15 @@ impl<'a> Scanner<'a> {
                 // While,
 
                 // EOF,
+                ' ' | '\n' | '\r' | '\t' => Token::new(TokenType::Whitespace, &char.to_string()),
                 unknown => {
                     RuneError::new(ErrorType::Scanner, self.line, 5, "Invalid token");
                     Token::new(TokenType::Invalid, &unknown.to_string())
                 }
             };
+            if token.r#type == TokenType::Whitespace || token.r#type == TokenType::Comment {
+                continue;
+            }
             self.tokens.push(token);
         }
     }
