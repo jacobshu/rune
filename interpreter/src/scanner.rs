@@ -84,6 +84,27 @@ impl<'a> Scanner<'a> {
                 },
 
                 // Literals
+                '"' => {
+                    let mut last_matched: char = '\0';
+
+                    let s: String = self
+                        .source
+                        .by_ref()
+                        .take_while(|(_pos, c)| {
+                            last_matched = *c;
+                            if c == '\n' {
+                                self.line += 1
+                            };
+                            *c != '"'
+                        })
+                        .map(|(_pos, c)| c)
+                        .collect();
+
+                    match last_matched {
+                        '"' => Token::new(TokenType::String, &s),
+                        _ => Token::new(TokenType::Invalid, &s),
+                    }
+                }
                 // Identifier,
                 // String,
                 // Number,
@@ -108,6 +129,7 @@ impl<'a> Scanner<'a> {
 
                 // EOF,
                 '\n' => {
+                    self.last_newline = index;
                     self.line += 1;
                     Token::new(TokenType::Whitespace, &char.to_string())
                 }
