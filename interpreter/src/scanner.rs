@@ -107,7 +107,11 @@ impl<'a> Scanner<'a> {
                 // While,
 
                 // EOF,
-                ' ' | '\n' | '\r' | '\t' => Token::new(TokenType::Whitespace, &char.to_string()),
+                '\n' => {
+                    self.line += 1;
+                    Token::new(TokenType::Whitespace, &char.to_string())
+                }
+                ' ' | '\r' | '\t' => Token::new(TokenType::Whitespace, &char.to_string()),
                 unknown => {
                     RuneError::new(ErrorType::Scanner, self.line, 5, "Invalid token");
                     Token::new(TokenType::Invalid, &unknown.to_string())
