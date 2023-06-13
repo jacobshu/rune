@@ -9,6 +9,7 @@ pub struct Scanner<'a> {
     start: usize,
     current: usize,
     line: usize,
+    last_newline: usize,
 }
 
 impl<'a> Scanner<'a> {
@@ -19,6 +20,7 @@ impl<'a> Scanner<'a> {
             start: 0,
             current: 0,
             line: 1,
+            last_newline: 0,
         }
     }
 
@@ -37,50 +39,170 @@ impl<'a> Scanner<'a> {
     fn scan_token(&mut self) {
         while let Some((index, char)) = self.source.next() {
             let token = match char {
-                '(' => Token::new(TokenType::LeftParen, &char.to_string()),
-                ')' => Token::new(TokenType::RightParen, &char.to_string()),
-                '{' => Token::new(TokenType::LeftBrace, &char.to_string()),
-                '}' => Token::new(TokenType::RightBrace, &char.to_string()),
-                ',' => Token::new(TokenType::Comma, &char.to_string()),
-                '.' => Token::new(TokenType::Dot, &char.to_string()),
-                '+' => Token::new(TokenType::Plus, &char.to_string()),
-                '-' => Token::new(TokenType::Minus, &char.to_string()),
-                ';' => Token::new(TokenType::Semicolon, &char.to_string()),
+                '(' => Token::new(
+                    TokenType::LeftParen,
+                    &char.to_string(),
+                    self.line,
+                    index - self.last_newline,
+                ),
+                ')' => Token::new(
+                    TokenType::RightParen,
+                    &char.to_string(),
+                    self.line,
+                    index - self.last_newline,
+                ),
+                '{' => Token::new(
+                    TokenType::LeftBrace,
+                    &char.to_string(),
+                    self.line,
+                    index - self.last_newline,
+                ),
+                '}' => Token::new(
+                    TokenType::RightBrace,
+                    &char.to_string(),
+                    self.line,
+                    index - self.last_newline,
+                ),
+                ',' => Token::new(
+                    TokenType::Comma,
+                    &char.to_string(),
+                    self.line,
+                    index - self.last_newline,
+                ),
+                '.' => Token::new(
+                    TokenType::Dot,
+                    &char.to_string(),
+                    self.line,
+                    index - self.last_newline,
+                ),
+                '+' => Token::new(
+                    TokenType::Plus,
+                    &char.to_string(),
+                    self.line,
+                    index - self.last_newline,
+                ),
+                '-' => Token::new(
+                    TokenType::Minus,
+                    &char.to_string(),
+                    self.line,
+                    index - self.last_newline,
+                ),
+                ';' => Token::new(
+                    TokenType::Semicolon,
+                    &char.to_string(),
+                    self.line,
+                    index - self.last_newline,
+                ),
 
                 // // One to two characters
                 '=' => match self.source.next_if_eq(&(index + 1, '=')) {
-                    Some(_equals) => Token::new(TokenType::EqualEqual, &"==".to_string()),
-                    None => Token::new(TokenType::Equal, &char.to_string()),
+                    Some(_equals) => Token::new(
+                        TokenType::EqualEqual,
+                        &"==".to_string(),
+                        self.line,
+                        index - self.last_newline,
+                    ),
+                    None => Token::new(
+                        TokenType::Equal,
+                        &char.to_string(),
+                        self.line,
+                        index - self.last_newline,
+                    ),
                 },
                 '!' => match self.source.next_if_eq(&(index + 1, '=')) {
-                    Some(_equals) => Token::new(TokenType::BangEqual, &"!=".to_string()),
-                    None => Token::new(TokenType::Bang, &char.to_string()),
+                    Some(_equals) => Token::new(
+                        TokenType::BangEqual,
+                        &"!=".to_string(),
+                        self.line,
+                        index - self.last_newline,
+                    ),
+                    None => Token::new(
+                        TokenType::Bang,
+                        &char.to_string(),
+                        self.line,
+                        index - self.last_newline,
+                    ),
                 },
                 '>' => match self.source.next_if_eq(&(index + 1, '=')) {
-                    Some(_equals) => Token::new(TokenType::GreaterEqual, &">=".to_string()),
-                    None => Token::new(TokenType::Greater, &char.to_string()),
+                    Some(_equals) => Token::new(
+                        TokenType::GreaterEqual,
+                        &">=".to_string(),
+                        self.line,
+                        index - self.last_newline,
+                    ),
+                    None => Token::new(
+                        TokenType::Greater,
+                        &char.to_string(),
+                        self.line,
+                        index - self.last_newline,
+                    ),
                 },
                 '<' => match self.source.next_if_eq(&(index + 1, '=')) {
-                    Some(_equals) => Token::new(TokenType::LessEqual, &"<=".to_string()),
-                    None => Token::new(TokenType::Less, &char.to_string()),
+                    Some(_equals) => Token::new(
+                        TokenType::LessEqual,
+                        &"<=".to_string(),
+                        self.line,
+                        index - self.last_newline,
+                    ),
+                    None => Token::new(
+                        TokenType::Less,
+                        &char.to_string(),
+                        self.line,
+                        index - self.last_newline,
+                    ),
                 },
                 '*' => match self.source.next_if_eq(&(index + 1, '*')) {
-                    Some(_equals) => Token::new(TokenType::StarStar, &"**".to_string()),
-                    None => Token::new(TokenType::Star, &char.to_string()),
+                    Some(_equals) => Token::new(
+                        TokenType::StarStar,
+                        &"**".to_string(),
+                        self.line,
+                        index - self.last_newline,
+                    ),
+                    None => Token::new(
+                        TokenType::Star,
+                        &char.to_string(),
+                        self.line,
+                        index - self.last_newline,
+                    ),
                 },
 
                 // Slash,
                 '/' => match self.source.next_if_eq(&(index + 1, '/')) {
                     Some(_equals) => {
+                        let mut temp_index: usize = 0;
                         let comment = self
                             .source
                             .by_ref()
-                            .take_while(|(_pos, c)| *c != '\n')
+                            .take_while(|(pos, c)| {
+                                temp_index = pos.clone();
+                                if c == &'\n' {
+                                    self.line += 1;
+                                    self.last_newline = index + pos;
+                                }
+                                println!(
+                                    "index: {:?}, pos: {:?}, last_newline: {:?}",
+                                    index, pos, self.last_newline
+                                );
+                                *c != '\n'
+                            })
                             .map(|(_pos, c)| c)
                             .collect();
-                        Token::new(TokenType::Comment, &comment)
+
+                        println!("index: {:?}, last_newline: {:?}", index, self.last_newline);
+                        Token::new(
+                            TokenType::Comment,
+                            &comment,
+                            self.line,
+                            // temp_index accounts for the chars processed in take_while but not yet consumed by the iterator
+                            temp_index - self.last_newline,
+                        )
                     }
-                    None => Token::new(TokenType::Slash, &char.to_string()),
+                    None => Token::new(
+                        TokenType::Slash,
+                        &char.to_string(),
+                        self.line,
+                        index - self.last_newline,
+                    ),
                 },
 
                 // Literals
@@ -92,8 +214,9 @@ impl<'a> Scanner<'a> {
                         .by_ref()
                         .take_while(|(_pos, c)| {
                             last_matched = *c;
-                            if c == '\n' {
-                                self.line += 1
+                            if c == &'\n' {
+                                self.line += 1;
+                                self.last_newline = index;
                             };
                             *c != '"'
                         })
@@ -101,8 +224,12 @@ impl<'a> Scanner<'a> {
                         .collect();
 
                     match last_matched {
-                        '"' => Token::new(TokenType::String, &s),
-                        _ => Token::new(TokenType::Invalid, &s),
+                        '"' => {
+                            Token::new(TokenType::String, &s, self.line, index - self.last_newline)
+                        }
+                        _ => {
+                            Token::new(TokenType::Invalid, &s, self.line, index - self.last_newline)
+                        }
                     }
                 }
                 // Identifier,
@@ -131,17 +258,32 @@ impl<'a> Scanner<'a> {
                 '\n' => {
                     self.last_newline = index;
                     self.line += 1;
-                    Token::new(TokenType::Whitespace, &char.to_string())
+                    Token::new(
+                        TokenType::Whitespace,
+                        &char.to_string(),
+                        self.line,
+                        index - self.last_newline,
+                    )
                 }
-                ' ' | '\r' | '\t' => Token::new(TokenType::Whitespace, &char.to_string()),
+                ' ' | '\r' | '\t' => Token::new(
+                    TokenType::Whitespace,
+                    &char.to_string(),
+                    self.line,
+                    index - self.last_newline,
+                ),
                 unknown => {
                     RuneError::new(ErrorType::Scanner, self.line, 5, "Invalid token");
-                    Token::new(TokenType::Invalid, &unknown.to_string())
+                    Token::new(
+                        TokenType::Invalid,
+                        &unknown.to_string(),
+                        self.line,
+                        index - self.last_newline,
+                    )
                 }
             };
-            if token.r#type == TokenType::Whitespace || token.r#type == TokenType::Comment {
-                continue;
-            }
+            // if token.r#type == TokenType::Whitespace || token.r#type == TokenType::Comment {
+            //     continue;
+            // }
             self.tokens.push(token);
         }
     }

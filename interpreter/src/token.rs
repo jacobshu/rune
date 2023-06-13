@@ -66,45 +66,28 @@ pub enum Literal {
 pub struct Token {
     pub r#type: TokenType,
     pub lexeme: String,
-    pub literal: Option<Literal>,
-    pub line: Option<usize>,
-    pub col: Option<u64>,
+    pub line: usize,
+    pub col: usize,
 }
 
 impl fmt::Debug for Token {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "Token: {{ type: {:?}, lexeme: \"{}\", literal: {:?}, line: {:?}, col: {:?}}}",
-            self.r#type, self.lexeme, self.literal, self.line, self.col
+            "Token: {{ type: {:?}, lexeme: \"{}\", line: {:?}, col: {:?}}}",
+            self.r#type, self.lexeme, self.line, self.col
         )
     }
 }
 
 impl Token {
-    pub fn new(token_type: TokenType, lexeme: &String) -> Token {
+    pub fn new(token_type: TokenType, lexeme: &String, line: usize, col: usize) -> Token {
         Token {
             r#type: token_type,
             lexeme: lexeme.to_string(),
-            literal: None,
-            line: None,
-            col: None,
+            line,
+            col,
         }
-    }
-
-    pub fn literal<'a>(&'a mut self, literal: Literal) -> &'a mut Token {
-        self.literal = Some(literal);
-        self
-    }
-
-    pub fn line<'a>(&'a mut self, line: usize) -> &'a mut Token {
-        self.line = Some(line);
-        self
-    }
-
-    pub fn col<'a>(&'a mut self, col: u64) -> &'a mut Token {
-        self.col = Some(col);
-        self
     }
 }
 
@@ -113,16 +96,12 @@ fn build_token() {
     let raw_string = String::from("54");
     let row = 3;
     let column = 5;
-    let mut binding = Token::new(TokenType::String, &raw_string);
-    let token = binding
-        .literal(Literal::Str(raw_string.clone()))
-        .line(row)
-        .col(column);
+    let mut token = Token::new(TokenType::String, &raw_string, row, column);
 
     assert_eq!(token.r#type, TokenType::String);
     assert_eq!(token.lexeme, raw_string);
-    assert_eq!(token.line.unwrap(), row);
-    assert_eq!(token.col.unwrap(), column);
+    assert_eq!(token.line, row);
+    assert_eq!(token.col, column);
     // TODO: figure out where to parse literal values: either at token creation, or when inserting tokens on scanning
     // assert_eq!(token.literal, raw_string)
 }
