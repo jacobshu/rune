@@ -30,7 +30,6 @@ impl<'a> Scanner<'a> {
 
     pub fn scan_tokens(&mut self) -> Vec<Token> {
         while !self.is_at_end() {
-            self.start = self.current;
             self.scan_token()
         }
         self.tokens.clone()
@@ -206,6 +205,7 @@ impl<'a> Scanner<'a> {
                 },
 
                 // Literals
+                // String
                 '"' => {
                     let mut last_matched: char = '\0';
 
@@ -232,9 +232,15 @@ impl<'a> Scanner<'a> {
                         }
                     }
                 }
-                // Identifier,
-                // String,
-                // Number,
+                // Numbers, keywords, & identifiers
+                alphanumeric => {
+                    if alphanumeric.is_ascii_digit() {
+                        let num: String = self.source.by_ref().peekable();
+                        num.take_while(|pos, n| n.is_ascii_digit() || (n == '.'))
+                    }
+
+                    if alphanumeric.is_ascii_alphabetic() {}
+                }
 
                 // Keywords
                 // And,
