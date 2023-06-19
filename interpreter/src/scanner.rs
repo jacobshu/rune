@@ -234,12 +234,33 @@ impl<'a> Scanner<'a> {
                 }
                 // Numbers, keywords, & identifiers
                 alphanumeric => {
-                    if alphanumeric.is_ascii_digit() {
-                        let num: String = self.source.by_ref().peekable();
-                        num.take_while(|pos, n| n.is_ascii_digit() || (n == '.'))
+                    match alphanumeric.is_ascii_digit() {
+                       true => {
+                        let mut last_matched: char = '\0';
+
+                        let mut dots: u8 = 0;
+                        let n: String = self.source.by_ref().take_while(|pos, n| { 
+                            last_matched = *n;
+                            if n == '.' && dots == 0 {
+                                dots += 1;
+                                true
+                            } else {
+                                n.is_ascii_digit()
+                            }}).map(|(_pos, c)| c).collect();
+                        
+                        match last_matched {
+                            '.' => {
+                                Token::new(TokenType::Invalid, &n, self.line, index - self.last_newline)
+                            }
+                            _ => {
+                                Token::new(TokenType::Number, &n, self.line, index - self.last_newline)
+                            }
+                        }
                     }
 
-                    if alphanumeric.is_ascii_alphabetic() {}
+                    if alphanumeric.is_ascii_alphabetic() {
+                        Token::new(TokenType::Invalid, &alphanumeric, self.line, index - self.last_newline)
+                    }
                 }
 
                 // Keywords
