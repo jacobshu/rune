@@ -1,4 +1,4 @@
-use crate::error::{ErrorType, RuneError};
+// use crate::error::{ErrorType, RuneError};
 use crate::token::{Token, TokenType};
 use std::iter::Peekable;
 use std::str::CharIndices;
@@ -178,11 +178,7 @@ impl<'a> Scanner<'a> {
                                     self.line += 1;
                                     self.last_newline = index + pos;
                                 }
-                                println!(
-                                    "index: {:?}, pos: {:?}, last_newline: {:?}",
-                                    index, pos, self.last_newline
-                                );
-                                *c != '\n'
+                               *c != '\n'
                             })
                             .map(|(_pos, c)| c)
                             .collect();
@@ -208,59 +204,103 @@ impl<'a> Scanner<'a> {
                 // String
                 '"' => {
                     let mut last_matched: char = '\0';
+                    let mut temp_index: usize = 0;
 
                     let s: String = self
                         .source
                         .by_ref()
-                        .take_while(|(_pos, c)| {
+                        .take_while(|(pos, c)| {
                             last_matched = *c;
+                            temp_index = pos.clone();
                             if c == &'\n' {
                                 self.line += 1;
-                                self.last_newline = index;
+                                self.last_newline = *pos;
                             };
-                            *c != '"'
+                            // println!("pos: {:?},  c: {:?}, last_n: {:?}", pos, c, self.last_newline);
+                            c != &'"'
                         })
                         .map(|(_pos, c)| c)
                         .collect();
 
                     match last_matched {
                         '"' => {
-                            Token::new(TokenType::String, &s, self.line, index - self.last_newline)
+                            Token::new(TokenType::String, &s, self.line, temp_index - self.last_newline)
                         }
                         _ => {
-                            Token::new(TokenType::Invalid, &s, self.line, index - self.last_newline)
+                            Token::new(TokenType::Invalid, &s, self.line, temp_index - self.last_newline)
                         }
                     }
                 }
+               // EOF,
+                '\n' => {
+                    self.last_newline = index;
+                    self.line += 1;
+                    Token::new(
+                        TokenType::Whitespace,
+                        &char.to_string(),
+                        self.line,
+                        index - self.last_newline,
+                    )
+                }
+                ' ' | '\r' | '\t' => Token::new(
+                    TokenType::Whitespace,
+                    &char.to_string(),
+                    self.line,
+                    index - self.last_newline,
+                ),
+//                unknown => {
+//                    RuneError::new(ErrorType::Scanner, self.line, 5, "Invalid token");
+//                    Token::new(
+//                        TokenType::Invalid,
+//                        &unknown.to_string(),
+//                        self.line,
+//                        index - self.last_newline,
+//                    )
+//                }
+            
+
                 // Numbers, keywords, & identifiers
                 alphanumeric => {
                     match alphanumeric.is_ascii_digit() {
                        true => {
+                           println!("in alphanumeric: {:?}, index: {:?}", alphanumeric, index);
                         let mut last_matched: char = '\0';
 
                         let mut dots: u8 = 0;
-                        let n: String = self.source.by_ref().take_while(|pos, n| { 
+                        // missing single digit numbers because take_while starts at the position
+                        // after the character matched by alphanumerice.is_ascii_digit(), this
+                        // works for comments and strings becuase they have initial markers but
+                        // won't work for numbers, keywords, or identifiers
+                        let number: String = self.source.by_ref().take_while(|(_pos, n)| { 
                             last_matched = *n;
-                            if n == '.' && dots == 0 {
+                            if n == &'.' && dots == 0 {
                                 dots += 1;
                                 true
                             } else {
+                                println!("ascii digit: {:?}, index: {:?}, pos: {:?}", n, index, _pos);
                                 n.is_ascii_digit()
                             }}).map(|(_pos, c)| c).collect();
-                        
+                       
+                        println!("num: {:?}", number);
                         match last_matched {
                             '.' => {
-                                Token::new(TokenType::Invalid, &n, self.line, index - self.last_newline)
+                                Token::new(TokenType::Invalid, &number, self.line, index - self.last_newline)
                             }
                             _ => {
-                                Token::new(TokenType::Number, &n, self.line, index - self.last_newline)
+                                Token::new(TokenType::Number, &number, self.line, index - self.last_newline)
                             }
                         }
                     }
+                       false => {
 
-                    if alphanumeric.is_ascii_alphabetic() {
-                        Token::new(TokenType::Invalid, &alphanumeric, self.line, index - self.last_newline)
-                    }
+                           let alpha: String = self.source.by_ref().take_while(|(_pos, s)| {
+                                s.is_ascii_alphabetic()
+                           }).map(|(_pos,c)| c).collect();
+
+                           Token::new(TokenType::Nil, &alpha, self.line, index - self.last_newline)
+
+                       }
+                   }
                 }
 
                 // Keywords
@@ -281,33 +321,8 @@ impl<'a> Scanner<'a> {
                 // Var,
                 // While,
 
-                // EOF,
-                '\n' => {
-                    self.last_newline = index;
-                    self.line += 1;
-                    Token::new(
-                        TokenType::Whitespace,
-                        &char.to_string(),
-                        self.line,
-                        index - self.last_newline,
-                    )
-                }
-                ' ' | '\r' | '\t' => Token::new(
-                    TokenType::Whitespace,
-                    &char.to_string(),
-                    self.line,
-                    index - self.last_newline,
-                ),
-                unknown => {
-                    RuneError::new(ErrorType::Scanner, self.line, 5, "Invalid token");
-                    Token::new(
-                        TokenType::Invalid,
-                        &unknown.to_string(),
-                        self.line,
-                        index - self.last_newline,
-                    )
-                }
-            };
+ };
+
             // if token.r#type == TokenType::Whitespace || token.r#type == TokenType::Comment {
             //     continue;
             // }
