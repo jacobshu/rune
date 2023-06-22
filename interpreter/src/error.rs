@@ -8,19 +8,24 @@ pub enum ErrorType {
 pub struct RuneError {
     pub r#type: ErrorType,
     pub message: String,
-    pub line: u32,
-    pub column: u32,
+    pub line: usize,
+    pub column: usize,
 }
 
 impl RuneError {
-    pub fn new(err_type: ErrorType, line: usize, col: usize, message: &str) {
-        RuneError::report(line, col, err_type, message);
+    pub fn new(err_type: ErrorType, line: usize, col: usize, message: &str) -> Self {
+        RuneError {
+            line, 
+            column: col, 
+            r#type: err_type, 
+            message: message.to_string(),
+        }
     }
 
-    fn report(line: usize, col: usize, err_type: ErrorType, message: &str) {
+    fn report(self) {
         eprintln!(
             "[line {}, column {}] Error ({:?}): {}",
-            line, col, err_type, message
+            self.line, self.column, self.r#type, self.message
         );
     }
 }
