@@ -262,32 +262,30 @@ impl<'a> Scanner<'a> {
                 // Numbers, keywords, & identifiers
                 alphanumeric => {
                     match alphanumeric.is_ascii_digit() {
-                       true => {
-                           println!("in alphanumeric: {:?}, index: {:?}", alphanumeric, index);
+                      true => {
+                        let mut number = Vec::new();
+                        number.push(alphanumeric);
+                        
                         let mut last_matched: char = '\0';
-
                         let mut dots: u8 = 0;
-                        // missing single digit numbers because take_while starts at the position
-                        // after the character matched by alphanumerice.is_ascii_digit(), this
-                        // works for comments and strings becuase they have initial markers but
-                        // won't work for numbers, keywords, or identifiers
-                        let number: String = self.source.by_ref().take_while(|(_pos, n)| { 
+                        let mut remaining: Vec<char> = self.source.by_ref().take_while(|(_pos, n)| { 
                             last_matched = *n;
                             if n == &'.' && dots == 0 {
                                 dots += 1;
                                 true
                             } else {
-                                println!("ascii digit: {:?}, index: {:?}, pos: {:?}", n, index, _pos);
                                 n.is_ascii_digit()
                             }}).map(|(_pos, c)| c).collect();
+                      
+                        number.append(&mut remaining);
+                        let number_string = number.iter().collect();
                        
-                        println!("num: {:?}", number);
                         match last_matched {
                             '.' => {
-                                Token::new(TokenType::Invalid, &number, self.line, index - self.last_newline)
+                                Token::new(TokenType::Invalid, &number_string, self.line, index - self.last_newline)
                             }
                             _ => {
-                                Token::new(TokenType::Number, &number, self.line, index - self.last_newline)
+                                Token::new(TokenType::Number, &number_string, self.line, index - self.last_newline)
                             }
                         }
                     }
@@ -323,9 +321,9 @@ impl<'a> Scanner<'a> {
 
  };
 
-            // if token.r#type == TokenType::Whitespace || token.r#type == TokenType::Comment {
-            //     continue;
-            // }
+            if token.r#type == TokenType::Whitespace || token.r#type == TokenType::Comment {
+                continue;
+            }
             self.tokens.push(token);
         }
     }
