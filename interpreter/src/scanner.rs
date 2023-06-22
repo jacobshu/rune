@@ -13,7 +13,7 @@ pub struct Scanner<'a> {
 }
 
 impl<'a> Scanner<'a> {
-    pub fn new(input: &'a String) -> Self {
+    pub fn new(input: &'a str) -> Self {
         Self {
             source: input.char_indices().peekable(),
             tokens: Vec::new(),
@@ -25,7 +25,7 @@ impl<'a> Scanner<'a> {
     }
 
     fn is_at_end(&mut self) -> bool {
-        self.source.peek() == None
+        self.source.peek().is_none()
     }
 
     pub fn scan_tokens(&mut self) -> Vec<Token> {
@@ -173,7 +173,7 @@ impl<'a> Scanner<'a> {
                             .source
                             .by_ref()
                             .take_while(|(pos, c)| {
-                                temp_index = pos.clone();
+                                temp_index = *pos;
                                 if c == &'\n' {
                                     self.line += 1;
                                     self.last_newline = index + pos;
@@ -211,7 +211,7 @@ impl<'a> Scanner<'a> {
                         .by_ref()
                         .take_while(|(pos, c)| {
                             last_matched = *c;
-                            temp_index = pos.clone();
+                            temp_index = *pos;
                             if c == &'\n' {
                                 self.line += 1;
                                 self.last_newline = *pos;

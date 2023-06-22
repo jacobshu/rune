@@ -24,7 +24,7 @@ impl Rune {
 
     fn run_file(&mut self, path: &String) {
         let path = Path::new(&path);
-        let buffer = read_to_string(&path).expect("Couldn't read file");
+        let buffer = read_to_string(path).expect("Couldn't read file");
         self.run(&buffer);
     }
 
