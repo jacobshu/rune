@@ -1,5 +1,6 @@
 // use crate::error::{ErrorType, RuneError};
 use crate::token::{Token, TokenType};
+use std::collections::HashMap;
 use std::iter::Peekable;
 use std::str::CharIndices;
 
@@ -10,6 +11,7 @@ pub struct Scanner<'a> {
     current: usize,
     line: usize,
     last_newline: usize,
+    keywords: HashMap<String, TokenType>,
 }
 
 impl<'a> Scanner<'a> {
@@ -21,6 +23,25 @@ impl<'a> Scanner<'a> {
             current: 0,
             line: 1,
             last_newline: 0,
+            keywords: HashMap::from([
+                ("and".to_string(), TokenType::And),
+                ("class".to_string(), TokenType::Class),
+                ("else".to_string(), TokenType::Else),
+                ("false".to_string(), TokenType::False),
+                ("fun".to_string(), TokenType::Fun),
+                ("for".to_string(), TokenType::For),
+                ("if".to_string(), TokenType::If),
+                ("nil".to_string(), TokenType::Nil),
+                ("or".to_string(), TokenType::Or),
+                ("print".to_string(), TokenType::Print),
+                ("return".to_string(), TokenType::Return),
+                ("super".to_string(), TokenType::Super),
+                ("this".to_string(), TokenType::This),
+                ("true".to_string(), TokenType::True),
+                ("var".to_string(), TokenType::Var),
+                ("while".to_string(), TokenType::While)
+            ]),
+
         }
     }
 
@@ -33,6 +54,14 @@ impl<'a> Scanner<'a> {
             self.scan_token()
         }
         self.tokens.clone()
+    }
+    
+    fn get_keyword(&mut self, identifier_or_keyword: String, index: usize) -> Token {
+       let token_type: Option<&TokenType> = self.keywords.get(&identifier_or_keyword);
+       match token_type {
+           Some(token_type) => Token::new(token_type.to_owned(), &identifier_or_keyword, self.line, index - self.last_newline),
+           None => Token::new(TokenType::Identifier, &identifier_or_keyword, self.line, index - self.last_newline)
+       }
     }
 
     fn scan_token(&mut self) {
@@ -266,10 +295,8 @@ impl<'a> Scanner<'a> {
                         let mut number = Vec::new();
                         number.push(alphanumeric);
                         
-                        let mut last_matched: char = '\0';
                         let mut dots: u8 = 0;
                         let mut remaining: Vec<char> = self.source.by_ref().take_while(|(_pos, n)| { 
-                            last_matched = *n;
                             if n == &'.' && dots == 0 {
                                 dots += 1;
                                 true
@@ -279,23 +306,20 @@ impl<'a> Scanner<'a> {
                       
                         number.append(&mut remaining);
                         let number_string = number.iter().collect();
-                       
-                        match last_matched {
-                            '.' => {
-                                Token::new(TokenType::Invalid, &number_string, self.line, index - self.last_newline)
-                            }
-                            _ => {
-                                Token::new(TokenType::Number, &number_string, self.line, index - self.last_newline)
-                            }
-                        }
+                        Token::new(TokenType::Number, &number_string, self.line, index - self.last_newline)
                     }
                        false => {
-
-                           let alpha: String = self.source.by_ref().take_while(|(_pos, s)| {
+                           let mut alpha = Vec::new();
+                           alpha.push(alphanumeric);
+                           let mut remaining: Vec<char> = self.source.by_ref().take_while(|(_pos, s)| {
                                 s.is_ascii_alphabetic()
                            }).map(|(_pos,c)| c).collect();
-
-                           Token::new(TokenType::Nil, &alpha, self.line, index - self.last_newline)
+                           
+                           alpha.append(&mut remaining);
+                           let alpha_string = alpha.iter().collect();
+                           
+                           self.get_keyword(alpha_string, index)
+                           //Token::new(TokenType::Nil, &alpha_string, self.line, index - self.last_newline)
 
                        }
                    }
