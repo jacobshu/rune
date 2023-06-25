@@ -28,7 +28,7 @@ impl<'a> Scanner<'a> {
                 ("class".to_string(), TokenType::Class),
                 ("else".to_string(), TokenType::Else),
                 ("false".to_string(), TokenType::False),
-                ("fun".to_string(), TokenType::Fun),
+                ("fn".to_string(), TokenType::Fn),
                 ("for".to_string(), TokenType::For),
                 ("if".to_string(), TokenType::If),
                 ("nil".to_string(), TokenType::Nil),
